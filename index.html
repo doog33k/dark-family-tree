@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark - Arbre Genealogique Interactif</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Source Sans Pro', sans-serif; background: #0a0a0a; background-image: radial-gradient(ellipse at top, #1a1a2e 0%, transparent 50%), radial-gradient(ellipse at bottom, #16213e 0%, transparent 50%); color: #e0e0e0; min-height: 100vh; padding: 20px; }
+        h1 { font-family: 'Cinzel', serif; text-align: center; color: #c9a227; font-size: 2.5em; margin-bottom: 8px; text-shadow: 0 0 30px rgba(201, 162, 39, 0.6); letter-spacing: 6px; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 12px; font-style: italic; }
+        .triquetra { text-align: center; font-size: 2.5em; margin: 8px 0 15px; color: #c9a227; }
+        
+        .episode-selector { max-width: 850px; margin: 0 auto 20px; padding: 18px; background: linear-gradient(145deg, rgba(25, 25, 40, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 12px; border: 1px solid rgba(201, 162, 39, 0.3); }
+        .episode-selector h3 { font-family: 'Cinzel', serif; color: #c9a227; text-align: center; margin-bottom: 12px; letter-spacing: 2px; font-size: 1.1em; }
+        .season-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+        .season-tab { padding: 6px 18px; font-family: 'Cinzel', serif; font-size: 0.9em; border: 2px solid #444; background: transparent; color: #888; cursor: pointer; border-radius: 4px; transition: all 0.3s ease; }
+        .season-tab:hover { border-color: #c9a227; color: #c9a227; }
+        .season-tab.active { color: #0a0a0a; }
+        .season-tab.s1 { border-color: #3498db; } .season-tab.s1.active { background: #3498db; }
+        .season-tab.s2 { border-color: #9b59b6; } .season-tab.s2.active { background: #9b59b6; }
+        .season-tab.s3 { border-color: #e74c3c; } .season-tab.s3.active { background: #e74c3c; }
+        .episode-display { text-align: center; margin-bottom: 10px; }
+        .episode-number { font-family: 'Cinzel', serif; font-size: 1.5em; color: #c9a227; }
+        .episode-title { font-size: 0.95em; color: #aaa; margin-top: 2px; }
+        .slider-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .slider-container label { font-size: 0.8em; color: #888; min-width: 50px; }
+        input[type="range"] { flex: 1; -webkit-appearance: none; height: 5px; background: linear-gradient(to right, var(--season-color, #c9a227) 0%, var(--season-color, #c9a227) var(--progress, 0%), #333 var(--progress, 0%), #333 100%); border-radius: 3px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--season-color, #c9a227); border-radius: 50%; cursor: pointer; }
+        
+        /* Era filters - clickable */
+        .eras-filter { margin: 15px 0; }
+        .eras-filter-label { text-align: center; font-size: 0.75em; color: #666; margin-bottom: 8px; }
+        .eras-display { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+        .era-badge { padding: 5px 12px; border-radius: 15px; font-size: 0.75em; font-family: 'Cinzel', serif; background: #222; color: #888; border: 2px solid #444; cursor: pointer; transition: all 0.3s ease; }
+        .era-badge:hover { border-color: #c9a227; color: #c9a227; }
+        .era-badge.available { background: #333; color: #ccc; border-color: #555; }
+        .era-badge.active { background: #c9a227; color: #0a0a0a; border-color: #c9a227; }
+        .era-badge.w2 { border-color: #9b59b6; }
+        .era-badge.w2.active { background: #9b59b6; color: white; }
+        .era-badge.origin { border-color: #27ae60; }
+        .era-badge.origin.active { background: #27ae60; color: white; }
+        .era-badge.hidden { display: none; }
+        
+        .filter-info { text-align: center; font-size: 0.7em; color: #666; margin-top: 8px; }
+        .filter-info .reset-btn { color: #c9a227; cursor: pointer; text-decoration: underline; margin-left: 5px; }
+        .filter-info .reset-btn:hover { color: #fff; }
+        
+        .revelation-box { background: rgba(201, 162, 39, 0.08); border: 1px solid rgba(201, 162, 39, 0.2); border-radius: 5px; padding: 10px; margin-top: 10px; }
+        .revelation-box h4 { color: #c9a227; margin-bottom: 5px; font-size: 0.8em; }
+        .revelation-box p { font-size: 0.8em; color: #aaa; line-height: 1.3; }
+        
+        .legend { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8em; }
+        .legend-item.hidden { display: none; }
+        .legend-color { width: 14px; height: 14px; border-radius: 50%; }
+        
+        .families-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; max-width: 1400px; margin: 0 auto; }
+        @media (max-width: 1100px) { .families-container { grid-template-columns: 1fr; } }
+        
+        .family-card { background: linear-gradient(145deg, rgba(25, 25, 40, 0.9) 0%, rgba(15, 15, 25, 0.95) 100%); border-radius: 10px; padding: 15px; border: 1px solid rgba(100, 100, 120, 0.2); }
+        .family-card.hidden { display: none; }
+        .family-title { font-family: 'Cinzel', serif; font-size: 1.2em; text-align: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid rgba(100, 100, 120, 0.3); letter-spacing: 2px; }
+        .family-nielsen .family-title { color: #4a9eff; }
+        .family-kahnwald .family-title { color: #ff6b6b; }
+        .family-doppler .family-title { color: #51cf66; }
+        .family-tiedemann .family-title { color: #ffd43b; }
+        .family-other .family-title { color: #9b59b6; }
+        
+        .family-tree { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .tree-row { display: flex; justify-content: center; align-items: flex-start; gap: 8px; position: relative; flex-wrap: wrap; }
+        .tree-row.hidden { display: none; }
+        .tree-row.era-filtered { display: none; }
+        
+        .couple { display: flex; align-items: center; gap: 3px; position: relative; }
+        .couple::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 60px); height: 2px; background: #ff69b4; z-index: 0; }
+        .couple .person { z-index: 1; }
+        
+        .generation-label { font-family: 'Cinzel', serif; font-size: 0.7em; color: #555; text-transform: uppercase; margin: 12px 0 8px; letter-spacing: 2px; text-align: center; width: 100%; }
+        .generation-label.hidden { display: none; }
+        .generation-label.era-filtered { display: none; }
+        .world-tag { display: inline-block; padding: 1px 5px; border-radius: 6px; font-size: 0.7em; margin-left: 4px; }
+        .world-tag.w2 { background: #9b59b6; color: white; }
+        .world-tag.origin { background: #27ae60; color: white; }
+        
+        .person { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; background: rgba(0, 0, 0, 0.4); border-radius: 6px; min-width: 65px; max-width: 75px; transition: all 0.3s ease; border: 1px solid transparent; position: relative; }
+        .person.hidden { display: none; }
+        .person.era-filtered { display: none; }
+        .person.new-reveal { border-color: rgba(201, 162, 39, 0.6); box-shadow: 0 0 10px rgba(201, 162, 39, 0.4); }
+        .person:hover { transform: translateY(-2px); background: rgba(0, 0, 0, 0.6); }
+        
+        .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-size: 0.8em; font-weight: 700; margin-bottom: 4px; border: 2px solid; }
+        .family-nielsen .avatar { background: linear-gradient(145deg, #1a3a5c 0%, #0d2137 100%); border-color: #4a9eff; color: #7bb8ff; }
+        .family-kahnwald .avatar { background: linear-gradient(145deg, #4a1a1a 0%, #2d0f0f 100%); border-color: #ff6b6b; color: #ff9999; }
+        .family-doppler .avatar { background: linear-gradient(145deg, #1a3d1f 0%, #0f2612 100%); border-color: #51cf66; color: #7de090; }
+        .family-tiedemann .avatar { background: linear-gradient(145deg, #4a3d0a 0%, #2d250a 100%); border-color: #ffd43b; color: #ffe066; }
+        .family-other .avatar { background: linear-gradient(145deg, #2d1a3d 0%, #1a0f26 100%); border-color: #9b59b6; color: #c39bd3; }
+        .avatar.deceased { opacity: 0.5; border-style: dashed; }
+        .avatar.adam { border-color: #333 !important; background: #111 !important; color: #555 !important; }
+        .avatar.eva { border-color: #e74c3c !important; }
+        .avatar.stranger { border-color: #c9a227 !important; background: linear-gradient(145deg, #3d3010 0%, #261f0a 100%) !important; color: #e6c84a !important; }
+        .avatar.mystery { border-color: #9b59b6 !important; }
+        .avatar.child { width: 30px; height: 30px; font-size: 0.7em; }
+        .avatar.w2 { border-style: double; border-width: 3px; }
+        
+        .person-name { font-weight: 600; font-size: 0.65em; text-align: center; line-height: 1.1; }
+        .person-actor { font-size: 0.55em; color: #555; text-align: center; }
+        .person-role { font-size: 0.5em; color: #777; text-align: center; font-style: italic; }
+        
+        .connections { margin-top: 25px; padding: 15px; background: linear-gradient(145deg, rgba(25, 25, 40, 0.9) 0%, rgba(15, 15, 25, 0.95) 100%); border-radius: 10px; border: 1px solid rgba(100, 100, 120, 0.2); max-width: 1400px; margin-left: auto; margin-right: auto; }
+        .connections h2 { font-family: 'Cinzel', serif; color: #c9a227; margin-bottom: 12px; text-align: center; font-size: 1.1em; }
+        .connection-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+        .connection-item { padding: 8px; background: rgba(0, 0, 0, 0.35); border-radius: 5px; border-left: 3px solid #c9a227; font-size: 0.8em; }
+        .connection-item.hidden { display: none; }
+        .connection-item.new-reveal { box-shadow: 0 0 8px rgba(231, 76, 60, 0.3); }
+        .connection-item strong { display: block; margin-bottom: 3px; font-size: 0.85em; }
+        .connection-item p { font-size: 0.75em; color: #888; }
+        .connection-item.mystery { border-left-color: #9b59b6; }
+        .connection-item.love { border-left-color: #e74c3c; }
+        .connection-item.family { border-left-color: #3498db; }
+        .connection-item.major { border-left-color: #f39c12; background: rgba(243, 156, 18, 0.05); }
+        
+        .footer { text-align: center; margin-top: 25px; padding: 12px; color: #444; font-size: 0.85em; }
+        .footer .quote { font-style: italic; color: #555; margin-top: 6px; }
+    </style>
+</head>
+<body>
+    <h1>DARK</h1>
+    <p class="subtitle">Arbre Genealogique Interactif</p>
+    <div class="triquetra">&#9883;</div>
+    
+    <div class="episode-selector">
+        <h3>Progression</h3>
+        <div class="season-tabs">
+            <button class="season-tab s1 active" onclick="selectSeason(1)">Saison 1</button>
+            <button class="season-tab s2" onclick="selectSeason(2)">Saison 2</button>
+            <button class="season-tab s3" onclick="selectSeason(3)">Saison 3</button>
+        </div>
+        <div class="episode-display">
+            <span class="episode-number" id="episodeNumber">S01 E01</span>
+            <div class="episode-title" id="episodeTitle">"Secrets"</div>
+        </div>
+        <div class="slider-container">
+            <label>Episode:</label>
+            <input type="range" id="episodeSlider" min="1" max="10" value="1" oninput="updateEpisode(this.value)">
+        </div>
+        
+        <div class="eras-filter">
+            <div class="eras-filter-label">Cliquez sur une epoque pour filtrer :</div>
+            <div class="eras-display" id="erasDisplay">
+                <span class="era-badge hidden" data-era="all" onclick="filterEra('all')">Toutes</span>
+                <span class="era-badge hidden" data-era="1888" onclick="filterEra('1888')">1888</span>
+                <span class="era-badge hidden" data-era="1921" onclick="filterEra('1921')">1921</span>
+                <span class="era-badge hidden" data-era="1953" onclick="filterEra('1953')">1953</span>
+                <span class="era-badge hidden" data-era="1954" onclick="filterEra('1954')">1954</span>
+                <span class="era-badge hidden" data-era="1986" onclick="filterEra('1986')">1986</span>
+                <span class="era-badge hidden" data-era="1987" onclick="filterEra('1987')">1987</span>
+                <span class="era-badge hidden" data-era="2019" onclick="filterEra('2019')">2019</span>
+                <span class="era-badge hidden" data-era="2020" onclick="filterEra('2020')">2020</span>
+                <span class="era-badge hidden" data-era="2052" onclick="filterEra('2052')">2052</span>
+                <span class="era-badge hidden" data-era="2053" onclick="filterEra('2053')">2053</span>
+                <span class="era-badge hidden w2" data-era="alt" onclick="filterEra('alt')">Monde Alt</span>
+                <span class="era-badge hidden origin" data-era="origin" onclick="filterEra('origin')">Origine</span>
+            </div>
+            <div class="filter-info" id="filterInfo"></div>
+        </div>
+        
+        <div class="revelation-box">
+            <h4>Revelations:</h4>
+            <p id="revelationText"></p>
+        </div>
+    </div>
+    
+    <div class="legend" id="legendContainer">
+        <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #4a9eff;"></div><span>Nielsen</span></div>
+        <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #ff6b6b;"></div><span>Kahnwald</span></div>
+        <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #51cf66;"></div><span>Doppler</span></div>
+        <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #ffd43b;"></div><span>Tiedemann</span></div>
+        <div class="legend-item" data-min-ep="11"><div class="legend-color" style="background: #9b59b6;"></div><span>Sic Mundus</span></div>
+    </div>
+    
+    <div class="families-container">
+        <!-- NIELSEN -->
+        <div class="family-card family-nielsen" data-min-ep="1">
+            <h2 class="family-title">NIELSEN</h2>
+            <div class="family-tree">
+                <div class="generation-label" data-min-ep="1" data-era="2019">2019 - Arbre familial</div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="couple">
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">TN</div><span class="person-name">Tronte</span><span class="person-role">Grand-pere</span></div>
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">JN</div><span class="person-name">Jana</span><span class="person-role">Grand-mere</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar deceased">MN</div><span class="person-name">Mads</span><span class="person-role">Disparu 1986</span></div>
+                    <div class="couple">
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">UN</div><span class="person-name">Ulrich</span><span class="person-actor">O. Masucci</span><span class="person-role">Pere</span></div>
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">KN</div><span class="person-name">Katharina</span><span class="person-actor">J. Triebel</span><span class="person-role">Mere</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">MaN</div><span class="person-name">Magnus</span><span class="person-actor">M. Jahn</span></div>
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">MaN</div><span class="person-name">Martha</span><span class="person-actor">L. Vicari</span></div>
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar child">MiN</div><span class="person-name">Mikkel</span><span class="person-actor">D. Liebrenz</span><span class="person-role">Disparu!</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="3" data-era="1986">1986</div>
+                <div class="tree-row" data-min-ep="3" data-era="1986">
+                    <div class="couple">
+                        <div class="person" data-ep="3" data-era="1986"><div class="avatar">TN</div><span class="person-name">Tronte</span><span class="person-actor">F. Kramer</span></div>
+                        <div class="person" data-ep="3" data-era="1986"><div class="avatar">JN</div><span class="person-name">Jana</span><span class="person-actor">A. Lebinsky</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="3" data-era="1986">
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">UN</div><span class="person-name">Ulrich ado</span><span class="person-actor">L. Bokelmann</span></div>
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar deceased">MN</div><span class="person-name">Mads</span><span class="person-role">Disparu</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="8" data-era="1953">1953</div>
+                <div class="tree-row" data-min-ep="8" data-era="1953">
+                    <div class="person" data-ep="8" data-era="1953"><div class="avatar">AN</div><span class="person-name">Agnes</span><span class="person-actor">A. Traue</span><span class="person-role">Mysterieuse</span></div>
+                    <div class="person" data-ep="8" data-era="1953"><div class="avatar child">TN</div><span class="person-name">Tronte</span><span class="person-actor">J. Marlon</span><span class="person-role">Enfant</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="19" data-era="alt">Monde Alternatif</div>
+                <div class="tree-row" data-min-ep="19" data-era="alt">
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar eva">Eva</div><span class="person-name">Eva</span><span class="person-role">Martha agee</span></div>
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar w2">MaN</div><span class="person-name">Martha Alt</span><span class="person-role">Sauve Jonas</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KAHNWALD -->
+        <div class="family-card family-kahnwald" data-min-ep="1">
+            <h2 class="family-title">KAHNWALD</h2>
+            <div class="family-tree">
+                <div class="generation-label" data-min-ep="1" data-era="2019">2019 - Arbre familial</div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">IK</div><span class="person-name">Ines</span><span class="person-actor">A. Winkler</span><span class="person-role">Grand-mere</span></div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="couple">
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar deceased">MK</div><span class="person-name">Michael</span><span class="person-actor">S. Rudolph</span><span class="person-role">Suicide</span></div>
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">HK</div><span class="person-name">Hannah</span><span class="person-actor">M. Schone</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">JK</div><span class="person-name">Jonas</span><span class="person-actor">L. Hofmann</span><span class="person-role">Protagoniste</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="7" data-era="revelation">Revelation E07</div>
+                <div class="tree-row" data-min-ep="7" data-era="revelation">
+                    <div class="person" data-ep="7" data-era="revelation"><div class="avatar stranger">!</div><span class="person-name">Mikkel=Michael</span><span class="person-role">Pere de Jonas!</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="2" data-era="mystery">Mysterieux</div>
+                <div class="tree-row" data-min-ep="2" data-era="mystery">
+                    <div class="person" data-ep="2" data-era="mystery"><div class="avatar stranger">?</div><span class="person-name">L'Etranger</span><span class="person-actor">A. Pietschmann</span><span class="person-role">Qui est-il?</span></div>
+                    <div class="person" data-ep="7" data-era="mystery"><div class="avatar stranger">!</div><span class="person-name">=Jonas adulte</span><span class="person-role">Revele E07</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="3" data-era="1986">1986</div>
+                <div class="tree-row" data-min-ep="3" data-era="1986">
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">IK</div><span class="person-name">Ines</span><span class="person-actor">A. Ratte-Polle</span><span class="person-role">Infirmiere</span></div>
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar child">Mi</div><span class="person-name">Mikkel</span><span class="person-role">Adopte</span></div>
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">HK</div><span class="person-name">Hannah ado</span><span class="person-actor">E. Lee</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="8" data-era="1953">1953</div>
+                <div class="tree-row" data-min-ep="8" data-era="1953">
+                    <div class="person" data-ep="8" data-era="1953"><div class="avatar">DK</div><span class="person-name">Daniel</span><span class="person-actor">S. Grossmann</span><span class="person-role">Chef police</span></div>
+                    <div class="person" data-ep="8" data-era="1953"><div class="avatar child">IK</div><span class="person-name">Ines enfant</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="10" data-era="2052">2052</div>
+                <div class="tree-row" data-min-ep="10" data-era="2052">
+                    <div class="person" data-ep="10" data-era="2052"><div class="avatar">JK</div><span class="person-name">Jonas</span><span class="person-role">Futur</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="14" data-era="1921">1921</div>
+                <div class="tree-row" data-min-ep="14" data-era="1921">
+                    <div class="person" data-ep="14" data-era="1921"><div class="avatar adam">Adam</div><span class="person-name">Adam</span><span class="person-role">=Jonas age!</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DOPPLER -->
+        <div class="family-card family-doppler" data-min-ep="1">
+            <h2 class="family-title">DOPPLER</h2>
+            <div class="family-tree">
+                <div class="generation-label" data-min-ep="1" data-era="2019">2019 - Arbre familial</div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">HD</div><span class="person-name">Helge</span><span class="person-actor">H. Beyer</span><span class="person-role">Demence</span></div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="couple">
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">PD</div><span class="person-name">Peter</span><span class="person-actor">S. Kampwirth</span><span class="person-role">Fils Helge</span></div>
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">CD</div><span class="person-name">Charlotte</span><span class="person-actor">K. Eichhorn</span><span class="person-role">Police</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">FD</div><span class="person-name">Franziska</span><span class="person-actor">G. Stiebitz</span></div>
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar child">ED</div><span class="person-name">Elisabeth</span><span class="person-actor">C. Falkenhayn</span><span class="person-role">Sourde</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="5" data-era="mystery">Personnages lies</div>
+                <div class="tree-row" data-min-ep="5" data-era="mystery">
+                    <div class="person" data-ep="5" data-era="mystery"><div class="avatar mystery">N</div><span class="person-name">Noah</span><span class="person-actor">M. Waschke</span><span class="person-role">Pretre</span></div>
+                    <div class="person" data-ep="6" data-era="mystery"><div class="avatar">HGT</div><span class="person-name">Tannhaus</span><span class="person-actor">C. Steyer</span><span class="person-role">Horloger</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="18" data-era="revelation">Revelation S2E08</div>
+                <div class="tree-row" data-min-ep="18" data-era="revelation">
+                    <div class="person" data-ep="18" data-era="revelation"><div class="avatar mystery">!</div><span class="person-name">Noah+Elisabeth</span><span class="person-role">=Parents Charlotte!</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="3" data-era="1986">1986</div>
+                <div class="tree-row" data-min-ep="3" data-era="1986">
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">HD</div><span class="person-name">Helge</span><span class="person-actor">P. Schneider</span><span class="person-role">Centrale</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="8" data-era="1953">1953</div>
+                <div class="tree-row" data-min-ep="8" data-era="1953">
+                    <div class="couple">
+                        <div class="person" data-ep="8" data-era="1953"><div class="avatar">BD</div><span class="person-name">Bernd</span><span class="person-actor">A. Taubman</span><span class="person-role">Centrale</span></div>
+                        <div class="person" data-ep="8" data-era="1953"><div class="avatar">GD</div><span class="person-name">Greta</span><span class="person-actor">C. Wege</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="8" data-era="1953">
+                    <div class="person" data-ep="8" data-era="1953"><div class="avatar child">HD</div><span class="person-name">Helge enfant</span><span class="person-actor">T. Philipp</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="11" data-era="2053">2053</div>
+                <div class="tree-row" data-min-ep="11" data-era="2053">
+                    <div class="person" data-ep="11" data-era="2053"><div class="avatar">ED</div><span class="person-name">Elisabeth</span><span class="person-actor">S. Borgmann</span><span class="person-role">Leader</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TIEDEMANN -->
+        <div class="family-card family-tiedemann" data-min-ep="1">
+            <h2 class="family-title">TIEDEMANN</h2>
+            <div class="family-tree">
+                <div class="generation-label" data-min-ep="1" data-era="2019">2019 - Arbre familial</div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="couple">
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">RT</div><span class="person-name">Regina</span><span class="person-actor">D. Kaufmann</span><span class="person-role">Hotel</span></div>
+                        <div class="person" data-ep="1" data-era="2019"><div class="avatar">AT</div><span class="person-name">Aleksander</span><span class="person-actor">P. Benedict</span><span class="person-role">Dir.</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="1" data-era="2019">
+                    <div class="person" data-ep="1" data-era="2019"><div class="avatar">BT</div><span class="person-name">Bartosz</span><span class="person-actor">P. Lux</span><span class="person-role">Ami Jonas</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="3" data-era="1986">1986</div>
+                <div class="tree-row" data-min-ep="3" data-era="1986">
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">ET</div><span class="person-name">Egon</span><span class="person-actor">C. Patzold</span><span class="person-role">Policier</span></div>
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">CT</div><span class="person-name">Claudia</span><span class="person-actor">J. Jenkins</span><span class="person-role">Dir.</span></div>
+                    <div class="person" data-ep="3" data-era="1986"><div class="avatar">RT</div><span class="person-name">Regina ado</span><span class="person-actor">L. Makrides</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="6" data-era="mystery">Voyageuse</div>
+                <div class="tree-row" data-min-ep="6" data-era="mystery">
+                    <div class="person" data-ep="6" data-era="mystery"><div class="avatar stranger">CT</div><span class="person-name">Claudia agee</span><span class="person-actor">L. Kreuzer</span><span class="person-role">Voyage temps</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="8" data-era="1953">1953</div>
+                <div class="tree-row" data-min-ep="8" data-era="1953">
+                    <div class="couple">
+                        <div class="person" data-ep="8" data-era="1953"><div class="avatar">ET</div><span class="person-name">Egon</span><span class="person-actor">S. Hulk</span><span class="person-role">Policier</span></div>
+                        <div class="person" data-ep="8" data-era="1953"><div class="avatar">DT</div><span class="person-name">Doris</span><span class="person-actor">L. Heyer</span></div>
+                    </div>
+                </div>
+                <div class="tree-row" data-min-ep="8" data-era="1953">
+                    <div class="person" data-ep="8" data-era="1953"><div class="avatar child">CT</div><span class="person-name">Claudia enfant</span><span class="person-actor">G. Gobel</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SIC MUNDUS -->
+        <div class="family-card family-other" data-min-ep="11">
+            <h2 class="family-title">SIC MUNDUS</h2>
+            <div class="family-tree">
+                <div class="generation-label" data-min-ep="11" data-era="1921">1921 - Organisation</div>
+                <div class="tree-row" data-min-ep="11" data-era="1921">
+                    <div class="person" data-ep="11" data-era="1921"><div class="avatar adam">Adam</div><span class="person-name">Adam</span><span class="person-role">Leader</span></div>
+                </div>
+                <div class="tree-row" data-min-ep="11" data-era="1921">
+                    <div class="person" data-ep="11" data-era="1921"><div class="avatar">N</div><span class="person-name">Noah jeune</span></div>
+                    <div class="person" data-ep="14" data-era="1921"><div class="avatar">AN</div><span class="person-name">Agnes</span></div>
+                    <div class="person" data-ep="18" data-era="1921"><div class="avatar">MaN</div><span class="person-name">Magnus</span></div>
+                    <div class="person" data-ep="18" data-era="1921"><div class="avatar">FD</div><span class="person-name">Franziska</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="19" data-era="alt">Monde Alternatif - Erit Lux</div>
+                <div class="tree-row" data-min-ep="19" data-era="alt">
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar eva">Eva</div><span class="person-name">Eva</span><span class="person-role">=Martha agee</span></div>
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar w2">MaN</div><span class="person-name">Martha Alt</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="19" data-era="alt">L'Inconnu (fils Jonas+Martha)</div>
+                <div class="tree-row" data-min-ep="19" data-era="alt">
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar mystery">?</div><span class="person-name">Enfant</span></div>
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar mystery">?</div><span class="person-name">Adulte</span></div>
+                    <div class="person" data-ep="19" data-era="alt"><div class="avatar mystery">?</div><span class="person-name">Age</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="26" data-era="origin">Monde Origine</div>
+                <div class="tree-row" data-min-ep="26" data-era="origin">
+                    <div class="person" data-ep="26" data-era="origin"><div class="avatar origin">HGT</div><span class="person-name">Tannhaus</span><span class="person-role">Createur</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CONNEXIONS -->
+    <div class="connections">
+        <h2>Relations et Revelations</h2>
+        <div class="connection-list">
+            <div class="connection-item love" data-ep="1"><strong>Ulrich + Hannah</strong><p>Liaison extraconjugale</p></div>
+            <div class="connection-item family" data-ep="1"><strong>Bartosz + Martha</strong><p>En couple</p></div>
+            <div class="connection-item family" data-ep="1"><strong>Magnus + Franziska</strong><p>En couple</p></div>
+            <div class="connection-item mystery" data-ep="1"><strong>Mads Nielsen</strong><p>Frere Ulrich, disparu 1986</p></div>
+            <div class="connection-item major" data-ep="3"><strong>Mikkel en 1986!</strong><p>Voyage dans le temps</p></div>
+            <div class="connection-item love" data-ep="3"><strong>Tronte + Claudia</strong><p>Liaison 1986</p></div>
+            <div class="connection-item major" data-ep="7"><strong>MIKKEL = MICHAEL</strong><p>Pere de Jonas!</p></div>
+            <div class="connection-item major" data-ep="7"><strong>L'Etranger = Jonas</strong><p>Jonas du futur</p></div>
+            <div class="connection-item mystery" data-ep="7"><strong>Martha = tante Jonas</strong><p>Soeur de Mikkel</p></div>
+            <div class="connection-item mystery" data-ep="8"><strong>Agnes mere Tronte</strong><p>Grand-mere Ulrich</p></div>
+            <div class="connection-item major" data-ep="10"><strong>Jonas en 2052</strong><p>Futur apocalypse</p></div>
+            <div class="connection-item major" data-ep="14"><strong>ADAM = JONAS</strong><p>Jonas defigure</p></div>
+            <div class="connection-item major" data-ep="18"><strong>Charlotte = fille Elisabeth</strong><p>Paradoxe!</p></div>
+            <div class="connection-item major" data-ep="18"><strong>Noah + Elisabeth</strong><p>Parents Charlotte</p></div>
+            <div class="connection-item major" data-ep="18"><strong>Martha Alt sauve Jonas</strong><p>Autre monde!</p></div>
+            <div class="connection-item major" data-ep="19"><strong>EVA = Martha agee</strong><p>Leader Erit Lux</p></div>
+            <div class="connection-item major" data-ep="19"><strong>L'Inconnu</strong><p>Fils Jonas+Martha</p></div>
+            <div class="connection-item major" data-ep="26"><strong>Monde Origine</strong><p>Tannhaus cree tout</p></div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Winden | Ligne rose = mariage/couple</p>
+        <p class="quote">"The beginning is the end, and the end is the beginning."</p>
+    </div>
+    
+    <script>
+        let currentSeason = 1;
+        let currentEraFilter = 'all';
+        let globalEp = 1;
+        
+        const seasonEpisodes = { 1: 10, 2: 8, 3: 8 };
+        const seasonColors = { 1: '#3498db', 2: '#9b59b6', 3: '#e74c3c' };
+        const seasonOffset = { 1: 0, 2: 10, 3: 18 };
+        
+        const episodeData = {
+            1: { title: '"Secrets"', eras: ['2019'], rev: "4 familles: Nielsen, Kahnwald, Doppler, Tiedemann. Michael suicide. Mikkel disparait." },
+            2: { title: '"Lies"', eras: ['2019'], rev: "L'Etranger arrive a l'hotel. Corps avec vetements 80s." },
+            3: { title: '"Past and Present"', eras: ['2019', '1986'], rev: "MIKKEL EN 1986! On decouvre tous les persos jeunes." },
+            4: { title: '"Double Lives"', eras: ['2019', '1986'], rev: "Jonas et Ulrich cherchent Mikkel." },
+            5: { title: '"Truths"', eras: ['2019', '1986'], rev: "Noah apparait. Yasin disparait." },
+            6: { title: '"Sic Mundus Creatus Est"', eras: ['2019', '1986'], rev: "Tannhaus l'horloger. Claudia agee." },
+            7: { title: '"Crossroads"', eras: ['2019', '1986'], rev: "MIKKEL = MICHAEL = PERE JONAS! L'Etranger = Jonas!" },
+            8: { title: '"As You Sow..."', eras: ['2019', '1986', '1953'], rev: "1953! Agnes et Tronte. Ulrich attaque Helge." },
+            9: { title: '"Everything Is Now"', eras: ['2019', '1986', '1953'], rev: "Ulrich arrete en 1953." },
+            10: { title: '"Alpha and Omega"', eras: ['2019', '1986', '1953', '2052'], rev: "JONAS EN 2052! Futur apocalyptique." },
+            11: { title: '"Beginnings and Endings"', eras: ['1921', '2020', '2053'], rev: "1921! SIC MUNDUS. Adam. Apocalypse 27 juin 2020." },
+            12: { title: '"Dark Matter"', eras: ['1921', '1987', '2020', '2053'], rev: "Hannah en 1987." },
+            13: { title: '"Ghosts"', eras: ['1954', '1987', '2020'], rev: "Helge retrouve 1954." },
+            14: { title: '"The Travelers"', eras: ['1921', '1987', '2020', '2053'], rev: "ADAM = JONAS VIEUX!" },
+            15: { title: '"Lost and Found"', eras: ['1987', '2020', '2053'], rev: "Ulrich tente evasion." },
+            16: { title: '"An Endless Cycle"', eras: ['1921', '2019', '2020'], rev: "Fete Nielsen." },
+            17: { title: '"The White Devil"', eras: ['1954', '1987', '2020'], rev: "Martha decouvre verite." },
+            18: { title: '"Endings and Beginnings"', eras: ['1921', '1954', '1987', '2020', '2053'], rev: "CHARLOTTE = FILLE ELISABETH! Noah pere. MARTHA ALT!" },
+            19: { title: '"Deja-vu"', eras: ['alt', '2020', '2053'], rev: "MONDE ALT! EVA = Martha. L'INCONNU." },
+            20: { title: '"The Survivors"', eras: ['1888', 'alt', '2020'], rev: "Martha 1888." },
+            21: { title: '"Adam and Eva"', eras: ['1954', '2020', 'alt'], rev: "Adam vs Eva." },
+            22: { title: '"The Origin"', eras: ['1954', '2052', 'alt'], rev: "Hannah enceinte Egon!" },
+            23: { title: '"Life and Death"', eras: ['2020', '2053'], rev: "Claudia comprend." },
+            24: { title: '"Light and Shadow"', eras: ['2020', 'alt'], rev: "Jour apocalypse." },
+            25: { title: '"Between the Time"', eras: ['multi'], rev: "3 siecles." },
+            26: { title: '"The Paradise"', eras: ['origin'], rev: "MONDE ORIGINE! FIN DU NOEUD!" }
+        };
+        
+        // Map similar eras
+        const eraGroups = {
+            '1986': ['1986', '1987'],
+            '1987': ['1986', '1987'],
+            '1953': ['1953', '1954'],
+            '1954': ['1953', '1954'],
+            '2019': ['2019', '2020'],
+            '2020': ['2019', '2020'],
+            '2052': ['2052', '2053'],
+            '2053': ['2052', '2053'],
+        };
+        
+        function selectSeason(season) {
+            currentSeason = season;
+            document.querySelectorAll('.season-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.season-tab.s' + season).classList.add('active');
+            const slider = document.getElementById('episodeSlider');
+            slider.max = seasonEpisodes[season];
+            slider.value = 1;
+            slider.style.setProperty('--season-color', seasonColors[season]);
+            currentEraFilter = 'all';
+            updateEpisode(1);
+        }
+        
+        function updateEpisode(ep) {
+            ep = parseInt(ep);
+            globalEp = seasonOffset[currentSeason] + ep;
+            const data = episodeData[globalEp];
+            
+            document.getElementById('episodeNumber').textContent = 'S0' + currentSeason + ' E' + (ep < 10 ? '0' : '') + ep;
+            document.getElementById('episodeTitle').textContent = data ? data.title : '';
+            document.getElementById('revelationText').textContent = data ? data.rev : '';
+            
+            const slider = document.getElementById('episodeSlider');
+            const progress = ((ep - 1) / (seasonEpisodes[currentSeason] - 1)) * 100;
+            slider.style.setProperty('--progress', progress + '%');
+            
+            // Update era badges visibility
+            updateEraBadges();
+            
+            // Apply episode filter first
+            applyEpisodeFilter();
+            
+            // Then apply era filter
+            if (currentEraFilter !== 'all') {
+                filterEra(currentEraFilter);
+            }
+        }
+        
+        function updateEraBadges() {
+            const availableEras = new Set(['all']);
+            
+            for (let i = 1; i <= globalEp; i++) {
+                if (episodeData[i]?.eras) {
+                    episodeData[i].eras.forEach(era => availableEras.add(era));
+                }
+            }
+            
+            document.querySelectorAll('.era-badge').forEach(badge => {
+                const era = badge.dataset.era;
+                if (availableEras.has(era) || era === 'all') {
+                    badge.classList.remove('hidden');
+                    badge.classList.add('available');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('available', 'active');
+                }
+            });
+            
+            // Set 'all' as active by default
+            if (currentEraFilter === 'all') {
+                document.querySelector('.era-badge[data-era="all"]').classList.add('active');
+            }
+        }
+        
+        function applyEpisodeFilter() {
+            // Filter by episode
+            document.querySelectorAll('[data-min-ep]').forEach(el => {
+                const minEp = parseInt(el.dataset.minEp) || 1;
+                el.classList.toggle('hidden', minEp > globalEp);
+            });
+            
+            document.querySelectorAll('[data-ep]').forEach(el => {
+                const elEp = parseInt(el.dataset.ep) || 1;
+                el.classList.toggle('hidden', elEp > globalEp);
+                el.classList.toggle('new-reveal', elEp === globalEp);
+            });
+        }
+        
+        function filterEra(era) {
+            currentEraFilter = era;
+            
+            // Update badge styles
+            document.querySelectorAll('.era-badge').forEach(badge => {
+                badge.classList.remove('active');
+                if (badge.dataset.era === era) {
+                    badge.classList.add('active');
+                }
+            });
+            
+            // Update filter info
+            const filterInfo = document.getElementById('filterInfo');
+            if (era === 'all') {
+                filterInfo.innerHTML = '';
+            } else {
+                filterInfo.innerHTML = 'Filtre actif: <strong>' + era + '</strong> <span class="reset-btn" onclick="filterEra(\'all\')">[Voir tout]</span>';
+            }
+            
+            // First reset all era filtering
+            document.querySelectorAll('.era-filtered').forEach(el => {
+                el.classList.remove('era-filtered');
+            });
+            
+            // Re-apply episode filter
+            applyEpisodeFilter();
+            
+            // If 'all', we're done
+            if (era === 'all') return;
+            
+            // Get eras to show
+            const erasToShow = eraGroups[era] ? eraGroups[era] : [era];
+            // Also include 'mystery' and 'revelation' which should always show
+            const specialEras = ['mystery', 'revelation'];
+            
+            // Filter elements by era
+            document.querySelectorAll('[data-era]').forEach(el => {
+                const elEra = el.dataset.era;
+                const elMinEp = parseInt(el.dataset.minEp) || parseInt(el.dataset.ep) || 1;
+                
+                // Skip if already hidden by episode filter
+                if (elMinEp > globalEp) return;
+                
+                // Check if this era should be shown
+                const shouldShow = erasToShow.includes(elEra) || specialEras.includes(elEra) || elEra === era;
+                
+                if (!shouldShow) {
+                    el.classList.add('era-filtered');
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => selectSeason(1));
+    </script>
+</body>
+</html>
