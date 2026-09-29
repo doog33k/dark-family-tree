@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  dark-family-tree:
+    build: .
+    container_name: dark-family-tree
+    restart: unless-stopped
+    ports:
+      - "8085:80"
