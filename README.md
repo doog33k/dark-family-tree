@@ -11,18 +11,6 @@ Arbre généalogique interactif pour la série **Dark** (Netflix), conçu pour s
 - **Révélations progressives** : Les connexions majeures apparaissent au bon moment
 - **Design fidèle à la série** : Ambiance sombre, triquetra, typographie Cinzel
 
-## Époques disponibles
-
-| Saison | Époques débloquées |
-|--------|-------------------|
-| S01 E01-02 | 2019 |
-| S01 E03 | + 1986 |
-| S01 E08 | + 1953 |
-| S01 E10 | + 2052 |
-| S02 E01 | + 1921, 2020, 2053 |
-| S03 E01 | + Monde Alternatif |
-| S03 E08 | + Monde Origine |
-
 ## Déploiement
 
 ### GitHub Pages
