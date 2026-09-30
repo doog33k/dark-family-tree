@@ -93,6 +93,8 @@
         .family-doppler .family-title { color: #51cf66; }
         .family-tiedemann .family-title { color: #ffd43b; }
         .family-other .family-title { color: #9b59b6; }
+        .family-mystery .family-title { color: #e67e22; }
+        .family-mystery .avatar { background: linear-gradient(145deg, #4a3520 0%, #2d1f10 100%); border-color: #e67e22; color: #f5b041; }
         
         .family-tree { display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .tree-row { display: flex; justify-content: center; align-items: flex-start; gap: 8px; position: relative; flex-wrap: wrap; }
@@ -203,6 +205,7 @@
         <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #ff6b6b;"></div><span>Kahnwald</span></div>
         <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #51cf66;"></div><span>Doppler</span></div>
         <div class="legend-item" data-min-ep="1"><div class="legend-color" style="background: #ffd43b;"></div><span>Tiedemann</span></div>
+        <div class="legend-item" data-min-ep="5"><div class="legend-color" style="background: #e67e22;"></div><span data-i18n="mysteries">Mysteres</span></div>
         <div class="legend-item" data-min-ep="11"><div class="legend-color" style="background: #9b59b6;"></div><span>Sic Mundus</span></div>
     </div>
     
@@ -330,17 +333,6 @@
                     <div class="person" data-ep="1" data-era="2019"><div class="avatar child">ED</div><span class="person-name">Elisabeth</span><span class="person-actor">C. Falkenhayn</span><span class="person-role" data-i18n="deaf">Sourde</span></div>
                 </div>
                 
-                <div class="generation-label" data-min-ep="5" data-era="mystery" data-i18n="relatedChars">Personnages lies</div>
-                <div class="tree-row" data-min-ep="5" data-era="mystery">
-                    <div class="person" data-ep="5" data-era="mystery"><div class="avatar mystery">N</div><span class="person-name">Noah</span><span class="person-actor">M. Waschke</span><span class="person-role" data-i18n="priest">Pretre</span></div>
-                    <div class="person" data-ep="6" data-era="mystery"><div class="avatar">HGT</div><span class="person-name">Tannhaus</span><span class="person-actor">C. Steyer</span><span class="person-role" data-i18n="clockmaker">Horloger</span></div>
-                </div>
-                
-                <div class="generation-label" data-min-ep="18" data-era="revelation"><span data-i18n="revelation">Revelation</span> S2E08</div>
-                <div class="tree-row" data-min-ep="18" data-era="revelation">
-                    <div class="person" data-ep="18" data-era="revelation"><div class="avatar mystery">!</div><span class="person-name">Noah+Elisabeth</span><span class="person-role" data-i18n="charlotteParents">=Parents Charlotte!</span></div>
-                </div>
-                
                 <div class="generation-label" data-min-ep="3" data-era="1986">1986</div>
                 <div class="tree-row" data-min-ep="3" data-era="1986">
                     <div class="person" data-ep="3" data-era="1986"><div class="avatar">HD</div><span class="person-name">Helge</span><span class="person-actor">P. Schneider</span><span class="person-role" data-i18n="plant">Centrale</span></div>
@@ -400,6 +392,23 @@
                 </div>
                 <div class="tree-row" data-min-ep="8" data-era="1953">
                     <div class="person" data-ep="8" data-era="1953"><div class="avatar child">CT</div><span class="person-name">Claudia <span data-i18n="child">enfant</span></span><span class="person-actor">G. Gobel</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MYSTERES - Personnages non affilies -->
+        <div class="family-card family-mystery" data-min-ep="5">
+            <h2 class="family-title" data-i18n="mysteries">MYSTERES</h2>
+            <div class="family-tree">
+                <div class="generation-label" data-min-ep="5" data-era="mystery" data-i18n="unknownChars">Personnages enigmatiques</div>
+                <div class="tree-row" data-min-ep="5" data-era="mystery">
+                    <div class="person" data-ep="5" data-era="mystery"><div class="avatar mystery">N</div><span class="person-name">Noah</span><span class="person-actor">M. Waschke</span><span class="person-role" data-i18n="priest">Pretre</span></div>
+                    <div class="person" data-ep="6" data-era="mystery"><div class="avatar">HGT</div><span class="person-name">Tannhaus</span><span class="person-actor">C. Steyer</span><span class="person-role" data-i18n="clockmaker">Horloger</span></div>
+                </div>
+                
+                <div class="generation-label" data-min-ep="18" data-era="revelation"><span data-i18n="revelation">Revelation</span> S2E08</div>
+                <div class="tree-row" data-min-ep="18" data-era="revelation">
+                    <div class="person" data-ep="18" data-era="revelation"><div class="avatar mystery">!</div><span class="person-name">Noah+Elisabeth</span><span class="person-role" data-i18n="charlotteParents">=Parents Charlotte!</span></div>
                 </div>
             </div>
         </div>
@@ -487,6 +496,7 @@
                 missing1986: "Disparu 1986", missing: "Disparu!", missingShort: "Disparu",
                 teen: "ado", child: "Enfant", young: "jeune", old: "agee", adult: "Adulte",
                 mysterious: "Mysterieuse", mysteriousChars: "Mysterieux",
+                mysteries: "MYSTERES", unknownChars: "Personnages enigmatiques",
                 altWorld: "Monde Alternatif", originWorld: "Monde Origine",
                 oldMartha: "Martha agee", savesJonas: "Sauve Jonas",
                 protagonist: "Protagoniste", revelation: "Revelation",
@@ -528,6 +538,7 @@
                 missing1986: "Missing 1986", missing: "Missing!", missingShort: "Missing",
                 teen: "teen", child: "Child", young: "young", old: "old", adult: "Adult",
                 mysterious: "Mysterious", mysteriousChars: "Mysterious",
+                mysteries: "MYSTERIES", unknownChars: "Enigmatic characters",
                 altWorld: "Alternate World", originWorld: "Origin World",
                 oldMartha: "Old Martha", savesJonas: "Saves Jonas",
                 protagonist: "Protagonist", revelation: "Revelation",
@@ -569,6 +580,7 @@
                 missing1986: "Vermisst 1986", missing: "Vermisst!", missingShort: "Vermisst",
                 teen: "Jugend", child: "Kind", young: "jung", old: "alt", adult: "Erwachsen",
                 mysterious: "Mysterios", mysteriousChars: "Mysterios",
+                mysteries: "MYSTERIEN", unknownChars: "Ratselhafte Charaktere",
                 altWorld: "Alternative Welt", originWorld: "Ursprungswelt",
                 oldMartha: "Alte Martha", savesJonas: "Rettet Jonas",
                 protagonist: "Protagonist", revelation: "Enthulung",
