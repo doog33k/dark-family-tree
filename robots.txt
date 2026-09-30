@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://doog33k.github.io/dark-family-tree/sitemap.xml
+Sitemap: https://dark.doog33k.fr/sitemap.xml
